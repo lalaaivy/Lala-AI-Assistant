@@ -2,6 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Lala">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lala - Study Helper</title>
@@ -30,6 +34,12 @@
         radial-gradient(ellipse at 40% 95%, rgba(192, 132, 252, .22), transparent 50%),
         var(--bg);
       background-attachment: fixed;
+    }
+
+    #install-btn {
+      background: linear-gradient(90deg, var(--pink), var(--accent));
+      color: #0b0b1e; border: none; border-radius: 20px;
+      padding: 6px 14px; font-size: .8rem; font-weight: 600;
     }
 
     #cosmos {
@@ -191,6 +201,7 @@
       <button class="chip">Give me an example</button>
       <button class="chip">Explain in simple terms</button>
       <button class="chip">Quiz me</button>
+      <button id="install-btn" class="d-none">Install app</button>
     </div>
 
     <div class="composer">

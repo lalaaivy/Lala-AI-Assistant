@@ -64,3 +64,25 @@ updateStatus();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js");
 }
+// Install button
+let deferredPrompt = null;
+const installBtn = document.getElementById("install-btn");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.remove("d-none");
+});
+
+installBtn.addEventListener("click", async () => {
+  installBtn.classList.add("d-none");
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  installBtn.classList.add("d-none");
+});

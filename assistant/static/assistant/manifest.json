@@ -1,20 +1,27 @@
 {
-   "name": "Lala - Study Helper",
+  "id": "/",
+  "name": "Lala - Study Helper",
   "short_name": "Lala",
+  "description": "Lala is your cosmic AI study helper.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-   "background_color": "#0b0b1e",
+  "orientation": "portrait",
+  "background_color": "#0b0b1e",
   "theme_color": "#0b0b1e",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "/static/assistant/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/static/assistant/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
