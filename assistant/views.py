@@ -33,6 +33,8 @@ def ask(request):
                     "the full piece at the length they ask for (1000 words "
                     "or more) with a clear introduction, body paragraphs, "
                     "and conclusion. Never cut an answer short."
+                    "Format replies in Markdown with short headings, bullet points and bold key terms. "
+                    "Write math using LaTeX between $...$ for inline and $$...$$ for display equations."
                 ),
                 max_output_tokens=8192,
                 thinking_config=types.ThinkingConfig(thinking_level="low"),

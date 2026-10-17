@@ -1,4 +1,4 @@
-const CACHE = "lala-v7";
+const CACHE = "lala-v8";
 const PRECACHE = [
   "/",
   "/static/assistant/app.js",
@@ -6,6 +6,10 @@ const PRECACHE = [
   "/static/assistant/icons/icon-192.png",
   "/static/assistant/icons/icon-512.png",
   "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+  "https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js",
+  "https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js",
+  "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+  "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
 ];
 
 self.addEventListener("install", (e) => {
