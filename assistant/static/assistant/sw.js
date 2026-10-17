@@ -1,4 +1,4 @@
-const CACHE = "lala-v6";
+const CACHE = "lala-v7";
 const PRECACHE = [
   "/",
   "/static/assistant/app.js",
@@ -30,22 +30,21 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
-  const url = new URL(req.url);
-  if (url.pathname.startsWith("/ask")) return;
+  if (new URL(req.url).pathname.startsWith("/ask")) return;
 
-  // Pages: network first, cached page when offline
-  if (req.mode === "navigate") {
-    e.respondWith(
-      fetch(req)
-        .then((res) => {
+  e.respondWith(
+    fetch(req)
+      .then((res) => {
+        if (res.ok) {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("/", copy));
-          return res;
-        })
-        .catch(() => caches.match("/"))
-    );
-    return;
-  }
+          const key = req.mode === "navigate" ? "/" : req;
+          caches.open(CACHE).then((c) => c.put(key, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req.mode === "navigate" ? "/" : req))
+  );
+});
 
   // Everything else: cached copy first, refreshed in the background
   e.respondWith(
