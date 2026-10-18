@@ -10,7 +10,8 @@ from google.genai import types
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 MODELS = [
-    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",   # fast, tried first
+    "gemini-3.8-flash",        # backup
 ]
 
 SYSTEM_PROMPT = (
@@ -41,6 +42,7 @@ def ask(request):
         wants_long = any(w in prompt.lower() for w in long_words)
         max_tokens = 6000 if wants_long else 800
 
+        last_error = None
         for model in MODELS:
             try:
                 response = client.models.generate_content(
@@ -49,23 +51,25 @@ def ask(request):
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_PROMPT,
                         max_output_tokens=max_tokens,
-                        thinking_config=types.ThinkingConfig(thinking_level="low"),
                     ),
                 )
                 return JsonResponse({"reply": response.text})
             except Exception as e:
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    continue
-                raise
+                last_error = e
+                print(f"Model {model} failed: {e}")
+                continue
 
-        return JsonResponse({
-            "error": "Lala has reached today's free limit. Please try again tomorrow."
-        }, status=429)
+        msg = str(last_error)
+        if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
+            return JsonResponse({
+                "error": "Lala has reached today's free limit. Please try again tomorrow."
+            }, status=429)
+        return JsonResponse({"error": "AI request failed: " + msg[:300]}, status=500)
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
+        return JsonResponse({"error": "Something went wrong: " + str(e)[:300]}, status=500)
 
 
 def service_worker(request):
