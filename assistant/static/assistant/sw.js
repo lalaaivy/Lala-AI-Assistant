@@ -1,4 +1,4 @@
-const CACHE = "lala-v12";
+const CACHE = "lala-v13";
 const PRECACHE = [
   "/",
   "/static/assistant/app.js",
@@ -52,7 +52,23 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Everything else: cached copy first, refreshed in the background
+  // Our own files (app.js, manifest, icons): network first so updates show up right away
+  if (new URL(req.url).origin === self.location.origin) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Third-party libraries (CDN): cached copy first, refreshed in the background
   e.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req)
