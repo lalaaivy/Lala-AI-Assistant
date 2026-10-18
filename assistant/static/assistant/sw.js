@@ -1,4 +1,4 @@
-const CACHE = "lala-v13";
+const CACHE = "lala-v14";
 const PRECACHE = [
   "/",
   "/static/assistant/app.js",
@@ -52,7 +52,7 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Our own files (app.js, manifest, icons): network first so updates show up right away
+  // Our own files (app.js, manifest, icons): network first, cache as backup
   if (new URL(req.url).origin === self.location.origin) {
     e.respondWith(
       fetch(req)
@@ -60,8 +60,9 @@ self.addEventListener("fetch", (e) => {
           if (res.ok) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(req, copy));
+            return res;
           }
-          return res;
+          return caches.match(req).then((cached) => cached || res);
         })
         .catch(() => caches.match(req))
     );
