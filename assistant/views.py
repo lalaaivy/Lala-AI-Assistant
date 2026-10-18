@@ -1,4 +1,3 @@
-from google.genai import types 
 import json
 import os
 from django.conf import settings
@@ -6,8 +5,24 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 from google import genai
+from google.genai import types
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+MODELS = [
+    "gemini-3.8-flash",
+]
+
+SYSTEM_PROMPT = (
+    "Your name is Lala, a friendly class assistant for students. "
+    "If asked who you are, say you are Lala, a study helper. "
+    "Keep answers short and simple: under 150 words unless the student "
+    "asks for an essay, report or detailed explanation, and then write "
+    "the length they ask for. "
+    "Use Markdown sparingly: bold key terms and short bullet points. "
+    "Write math in LaTeX between $...$ for inline and $$...$$ for "
+    "display equations, and only when needed."
+)
 
 
 def index(request):
@@ -20,31 +35,37 @@ def ask(request):
         prompt = json.loads(request.body).get("prompt", "").strip()
         if not prompt:
             return JsonResponse({"error": "Empty prompt"}, status=400)
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=(
-                    "Your name is Lala. You are a friendly class assistant "
-                    "for students. If asked who you are, say you are Lala, "
-                    "a study helper. Match the length to the request: give "
-                    "short answers to simple questions, but when the student "
-                    "asks for an essay, report, or long explanation, write "
-                    "the full piece at the length they ask for (1000 words "
-                    "or more) with a clear introduction, body paragraphs, "
-                    "and conclusion. Never cut an answer short."
-                    "Format replies in Markdown with short headings, bullet points and bold key terms. "
-                    "Write math using LaTeX between $...$ for inline and $$...$$ for display equations."
-                ),
-                max_output_tokens=8192,
-                thinking_config=types.ThinkingConfig(thinking_level="low"),
-            ),
-        )
-        return JsonResponse({"reply": response.text})
+
+        # Short replies by default, longer only when asked
+        long_words = ("essay", "report", "words", "detailed", "in depth", "explain fully")
+        wants_long = any(w in prompt.lower() for w in long_words)
+        max_tokens = 6000 if wants_long else 800
+
+        for model in MODELS:
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_PROMPT,
+                        max_output_tokens=max_tokens,
+                        thinking_config=types.ThinkingConfig(thinking_level="low"),
+                    ),
+                )
+                return JsonResponse({"reply": response.text})
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    continue
+                raise
+
+        return JsonResponse({
+            "error": "Lala has reached today's free limit. Please try again tomorrow."
+        }, status=429)
+
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return JsonResponse({"error": f"AI request failed: {e}"}, status=500)
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 def service_worker(request):
@@ -53,5 +74,3 @@ def service_worker(request):
     )
     with open(path, "rb") as f:
         return HttpResponse(f.read(), content_type="application/javascript")
-
-        
