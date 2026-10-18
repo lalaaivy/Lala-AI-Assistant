@@ -2,21 +2,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lala">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lala - Study Helper</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" rel="stylesheet">
   <link rel="manifest" href="{% static 'assistant/manifest.json' %}">
   <meta name="theme-color" content="#0b0b1e">
-  <link rel="icon" href="{% static 'assistant/icons/icon-192.png' %}">
   <link rel="apple-touch-icon" href="{% static 'assistant/icons/icon-192.png' %}">
   <style>
+    
     :root {
       --bg: #070714;
       --accent: #22e5e5;
@@ -37,10 +37,7 @@
         var(--bg);
       background-attachment: fixed;
     }
-    button { touch-action: manipulation; }
-
-    /* Markdown replies */
-    .message.md { white-space: normal; }
+        .message.md { white-space: normal; }
     .message.md > :first-child { margin-top: 0; }
     .message.md > :last-child { margin-bottom: 0; }
     .message.md p { margin: 0 0 .7em; }
@@ -75,7 +72,8 @@
       color: #0b0b1e; border: none; border-radius: 20px;
       padding: 6px 14px; font-size: .8rem; font-weight: 600;
     }
-
+  button { touch-action: manipulation; }
+    .footer-note { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
     #cosmos {
       position: fixed;
       inset: 0;
@@ -202,26 +200,12 @@
     }
     #clear-btn:hover { color: #fff; border-color: #fff; }
 
-    .footer-note {
-      font-size: .7rem; color: #7c7ca0; text-align: center;
-      padding: 4px 0 calc(10px + env(safe-area-inset-bottom));
-    }
+    .footer-note { font-size: .7rem; color: #7c7ca0; text-align: center; padding: 4px 0 10px; }
 
     #offline-banner {
       background: rgba(255, 193, 7, .15); color: #ffd666;
       border: none; border-bottom: 1px solid rgba(255, 193, 7, .4);
       border-radius: 0; text-align: center; padding: 8px; margin: 0; font-size: .85rem;
-    }
-
-    /* Lighter effects on phones */
-    @media (max-width: 600px) {
-      .message.ai, .composer {
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        background: rgba(15, 12, 40, .85);
-      }
-      .brand { animation: none; filter: none; }
-      .brand::after { animation: none; }
     }
   </style>
 </head>
@@ -303,7 +287,7 @@
         phase: rand(0, Math.PI * 2), speed: rand(0.01, 0.04),
       }));
 
-      const N = w < 500 ? 250 : 1900;
+      const N = w < 500 ? 1100 : 1900;
       particles = [];
       for (let i = 0; i < N; i++) {
         let a, r;
@@ -330,10 +314,9 @@
     }
 
     function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = window.innerWidth;
       h = window.innerHeight;
-      // lower resolution on phones keeps the page smooth
-      dpr = w < 500 ? 1 : Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -577,14 +560,8 @@
       drawLabel();
     }
 
-    // Phones draw about 30 frames per second instead of 60
-    let lastFrame = 0;
-    function loop(t) {
-      if (!document.hidden && (w >= 500 || t - lastFrame > 33)) {
-        lastFrame = t;
-        update();
-        draw();
-      }
+    function loop() {
+      if (!document.hidden) { update(); draw(); }
       requestAnimationFrame(loop);
     }
 
@@ -607,14 +584,14 @@
     if (reduceMotion) {
       update(); draw();
     } else {
-      requestAnimationFrame(loop);
+      loop();
     }
   })();
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script src="{% static 'assistant/app.js' %}"></script>
+
 </body>
 </html>
