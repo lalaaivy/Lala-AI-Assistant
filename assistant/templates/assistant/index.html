@@ -10,16 +10,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lala - Study Helper</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" rel="stylesheet">
   <link rel="manifest" href="{% static 'assistant/manifest.json' %}">
-  <meta name="theme-color" content="#0b0b1e">
+  <meta name="theme-color" content="#0d0c1f">
   <link rel="apple-touch-icon" href="{% static 'assistant/icons/icon-192.png' %}">
   <style>
     
     :root {
-      --bg: #070714;
-      --accent: #22e5e5;
+      --bg: #0d0c1f;
+      --accent: #7fd6d6;
       --purple: #8b5cf6;
       --pink: #c084fc;
       --glass: rgba(255, 255, 255, 0.07);
@@ -27,13 +27,14 @@
     }
     * { box-sizing: border-box; }
     body {
+      font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
       margin: 0;
       min-height: 100vh;
-      color: #e8e8f5;
+      color: #dcdcec;
       background:
-        radial-gradient(ellipse at 15% 10%, rgba(139, 92, 246, .35), transparent 50%),
-        radial-gradient(ellipse at 85% 30%, rgba(34, 229, 229, .18), transparent 45%),
-        radial-gradient(ellipse at 40% 95%, rgba(192, 132, 252, .22), transparent 50%),
+        radial-gradient(ellipse at 15% 10%, rgba(139, 92, 246, .22), transparent 50%),
+        radial-gradient(ellipse at 85% 30%, rgba(127, 214, 214, .09), transparent 45%),
+        radial-gradient(ellipse at 40% 95%, rgba(192, 132, 252, .13), transparent 50%),
         var(--bg);
       background-attachment: fixed;
     }
@@ -47,7 +48,7 @@
     .message.md h1 { font-size: 1.2rem; }
     .message.md ul, .message.md ol { padding-left: 1.3em; margin: 0 0 .7em; }
     .message.md li { margin-bottom: .25em; }
-    .message.md strong { color: #fff; }
+    .message.md strong { color: #ecebf7; }
     .message.md a { color: var(--accent); }
     .message.md code {
       background: rgba(255,255,255,.12); padding: 1px 6px;
@@ -74,12 +75,6 @@
     }
   button { touch-action: manipulation; }
     .footer-note { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-    #cosmos {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
 
     .app {
       position: relative;
@@ -98,38 +93,18 @@
       padding: 16px 20px;
     }
     .brand {
-      font-family: 'Orbitron', 'Segoe UI', sans-serif;
-      font-size: 2.3rem;
-      font-weight: 900;
-      letter-spacing: 6px;
-      line-height: 1.1;
-      background: linear-gradient(90deg, #22e5e5, #c084fc, #ff9ecb, #22e5e5);
-      background-size: 300% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      filter: drop-shadow(0 0 10px rgba(192, 132, 252, .6));
-      animation: shimmer 6s linear infinite;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 1.6rem; font-weight: 700; line-height: 1.2;
     }
-    .brand::after {
-      content: "✦";
-      font-size: .9rem;
-      margin-left: 6px;
-      vertical-align: super;
-      color: #ffe08a;
-      -webkit-text-fill-color: #ffe08a;
-      animation: twinkle 2s ease-in-out infinite;
-    }
-    @keyframes shimmer { to { background-position: 300% 0; } }
-    @keyframes twinkle { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) {
-      .brand, .brand::after { animation: none; }
+    .brand .logo { width: 34px; height: 34px; flex: none; }
+    .wordmark {
+      letter-spacing: .5px;
+      background: linear-gradient(90deg, #7fd6d6, #c4a8ee);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent; -webkit-text-fill-color: transparent;
     }
     .tagline {
-      font-family: 'Orbitron', 'Segoe UI', sans-serif;
-      font-size: .62rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
+      font-size: .8rem;
       color: #9a9ac0;
     }
     .status {
@@ -142,26 +117,95 @@
            background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 
     /* Chat */
-    #chat { flex: 1; overflow-y: auto; padding: 8px 16px 16px; }
+    #chat { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px 16px 16px; display: flex; flex-direction: column; }
     #chat::-webkit-scrollbar { width: 6px; }
     #chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
+    .row { align-self: flex-start; max-width: 86%; margin-bottom: 14px; }
+    .row.user { align-self: flex-end; }
+    .name { font-size: .75rem; font-weight: 600; color: #9a9ac0; margin: 0 8px 4px; }
+    .row.ai .name { color: var(--accent); }
+    .row.user .name { text-align: right; }
     .message {
-      padding: 12px 16px; border-radius: 18px; margin-bottom: 14px;
-      max-width: 86%; white-space: pre-wrap; line-height: 1.5; font-size: .95rem;
+      padding: 12px 16px; border-radius: 18px;
+      white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; font-size: 1rem;
     }
     .message.ai {
-      background: rgba(15, 12, 40, .55);
+      background: rgba(20, 17, 46, .72);
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-top-left-radius: 4px;
     }
     .message.user {
-      margin-left: auto; color: #0b0b1e; font-weight: 500;
+      color: #0b0b1e; font-weight: 500;
       background: linear-gradient(135deg, var(--accent), var(--pink));
       border-top-right-radius: 4px;
-      box-shadow: 0 4px 18px rgba(34, 229, 229, .25);
+      box-shadow: 0 2px 10px rgba(127, 214, 214, .10);
     }
+
+
+
+    /* Greeting hero: spinning planet */
+    .empty { margin: auto; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 16px; }
+    .planet { width: min(300px, 88vw); height: auto; overflow: visible; animation: bob 6s ease-in-out infinite; }
+    .planet .spin { animation: spin 3.2s linear infinite; }
+    .planet .spin2 { animation: spin2 1.9s linear infinite; }
+    .planet .star { animation: twinkle 3s ease-in-out infinite; }
+    @keyframes spin { to { transform: translateX(-44px); } }
+    @keyframes spin2 { to { transform: translateX(-30px); } }
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes twinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+    .hero-title { margin: 6px 0 4px; font-size: 1.45rem; font-weight: 600; color: #e6e6f2; }
+    .hero-sub { margin: 0; font-size: 1rem; color: #9a9ac0; }
+    @media (prefers-reduced-motion: reduce) { .planet, .planet .spin, .planet .spin2, .planet .star { animation: none; } }
+
+    /* Thinking: spinning logo */
+    .think { display: block; width: 34px; height: 34px; animation: think-spin 1.4s linear infinite; }
+    @keyframes think-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .think { animation: none; } }
+
+    /* Menu + history drawer */
+    .head-left { display: flex; align-items: center; gap: 12px; }
+    #menu-btn, #close-drawer {
+      width: 40px; height: 40px; flex: none; display: grid; place-items: center;
+      border-radius: 12px; background: var(--glass); color: var(--accent);
+      border: 1px solid var(--glass-border);
+    }
+    #menu-btn svg, #close-drawer svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+    #overlay {
+      position: fixed; inset: 0; z-index: 19; background: rgba(5, 4, 15, .6);
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    #overlay.open { opacity: 1; pointer-events: auto; }
+    #drawer {
+      position: fixed; top: 0; bottom: 0; left: 0; z-index: 20;
+      width: min(300px, 85vw); background: #15122f;
+      border-right: 1px solid var(--glass-border);
+      display: flex; flex-direction: column;
+      padding: calc(16px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+      transform: translateX(-102%); visibility: hidden;
+      transition: transform .2s, visibility .2s;
+    }
+    #drawer.open { transform: none; visibility: visible; }
+    .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .drawer-head strong { font-size: 1.1rem; color: var(--accent); }
+    #new-chat {
+      border: none; border-radius: 14px; padding: 10px 14px; font-weight: 600; text-align: left;
+      color: #0b0b1e; background: linear-gradient(90deg, var(--pink), var(--accent));
+    }
+    .hist-label { margin: 18px 4px 8px; font-size: .75rem; color: #9a9ac0; }
+    #history { flex: 1; overflow-y: auto; }
+    .hist-empty { padding: 8px 4px; font-size: .85rem; color: #7c7ca0; }
+    .hist-item { display: flex; align-items: center; margin-bottom: 6px; border: 1px solid transparent; border-radius: 12px; }
+    .hist-item:hover { background: var(--glass); }
+    .hist-item.active { background: var(--glass); border-color: var(--glass-border); }
+    .hist-open {
+      flex: 1; min-width: 0; padding: 10px 12px; text-align: left; background: none; border: 0;
+      color: #dcdcec; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .hist-del { width: 34px; height: 34px; flex: none; background: none; border: 0; color: #9a9ac0; font-size: 1.1rem; }
+    .hist-del:hover { color: #ff9ecb; }
+    @media (prefers-reduced-motion: reduce) { #drawer, #overlay { transition: none; } }
 
     /* Chips */
     .chips { padding: 0 16px 10px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -180,25 +224,25 @@
       border-radius: 20px;
     }
     #prompt {
-      background: rgba(0, 0, 0, .25); color: #fff;
+      background: rgba(0, 0, 0, .25); color: #e6e6f2;
       border: 1px solid var(--glass-border); border-radius: 14px; resize: none;
     }
     #prompt::placeholder { color: #8c8cb0; }
     #prompt:focus {
-      background: rgba(0, 0, 0, .35); color: #fff;
-      border-color: var(--accent); box-shadow: 0 0 0 .2rem rgba(34, 229, 229, .2);
+      background: rgba(0, 0, 0, .35); color: #e6e6f2;
+      border-color: var(--accent); box-shadow: 0 0 0 .2rem rgba(127, 214, 214, .2);
     }
     #send-btn {
       border: none; border-radius: 22px; padding: 8px 30px; font-weight: 600;
       color: #0b0b1e; background: linear-gradient(90deg, var(--pink), var(--accent));
-      box-shadow: 0 0 18px rgba(192, 132, 252, .45);
+      box-shadow: 0 2px 10px rgba(192, 132, 252, .18);
     }
     #send-btn:hover { filter: brightness(1.1); }
-    #clear-btn {
+    #new-btn {
       background: transparent; color: #bdbde0; border-radius: 22px;
       border: 1px solid var(--glass-border); padding: 8px 22px;
     }
-    #clear-btn:hover { color: #fff; border-color: #fff; }
+    #new-btn:hover { color: #fff; border-color: #fff; }
 
     .footer-note { font-size: .7rem; color: #7c7ca0; text-align: center; padding: 4px 0 10px; }
 
@@ -211,7 +255,6 @@
 </head>
 <body>
   {% csrf_token %}
-  <canvas id="cosmos"></canvas>
 
   <div class="app">
     <div id="offline-banner" class="d-none">
@@ -219,16 +262,19 @@
     </div>
 
     <header class="app-header">
-      <div>
-        <div class="brand">Lala</div>
-        <div class="tagline">Your cosmic study helper</div>
+      <div class="head-left">
+        <button id="menu-btn" aria-label="Open menu" aria-controls="drawer">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <div>
+          <div class="brand"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ec8f2"/><stop offset="1" stop-color="#8ea3fa"/></linearGradient></defs><g transform="rotate(-20 50 50)"><path d="M8 50A42 13 0 0 1 92 50" fill="none" stroke="#ffe08a" stroke-width="4" stroke-linecap="round" opacity=".7"/><circle cx="50" cy="50" r="22" fill="url(#lg)"/><path d="M8 50A42 13 0 0 0 92 50" fill="none" stroke="#ffe08a" stroke-width="4" stroke-linecap="round"/></g></svg><span class="wordmark">Lala</span></div>
+          <div class="tagline">Study assistant</div>
+        </div>
       </div>
       <div class="status"><span class="dot"></span> Class assistant</div>
     </header>
 
-    <div id="chat">
-      <div class="message ai">Hi! I'm Lala. Ask me anything about your lessons and I'll help you explore it.</div>
-    </div>
+    <div id="chat"></div>
 
     <div class="chips">
       <button class="chip">Give me an example</button>
@@ -241,353 +287,102 @@
       <textarea id="prompt" class="form-control mb-2" rows="2"
                 placeholder="Ask Lala a question..."></textarea>
       <div class="d-flex justify-content-between">
-        <button id="clear-btn">Clear</button>
+        <button id="new-btn">New chat</button>
         <button id="send-btn">Send</button>
       </div>
     </div>
 
     <div class="footer-note">Safe Student Mode • Offline PWA</div>
   </div>
+  <div id="overlay"></div>
+  <aside id="drawer" aria-label="Chat history">
+    <div class="drawer-head">
+      <strong>Lala</strong>
+      <button id="close-drawer" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <button id="new-chat">+ New chat</button>
+    <div class="hist-label">History</div>
+    <div id="history"></div>
+  </aside>
 
-  <script>
-  (() => {
-    const canvas = document.getElementById("cosmos");
-    const ctx = canvas.getContext("2d");
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  <template id="think-tpl">
+    <svg class="think" viewBox="0 0 100 100" role="img" aria-label="Lala is thinking">
+      <defs>
+        <linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#5ec8f2"/>
+          <stop offset="1" stop-color="#8ea3fa"/>
+        </linearGradient>
+      </defs>
+      <g transform="rotate(-20 50 50)">
+        <path d="M8 50A42 13 0 0 1 92 50" fill="none" stroke="#ffe08a" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
+        <circle cx="50" cy="50" r="22" fill="url(#tg)"/>
+        <path d="M8 50A42 13 0 0 0 92 50" fill="none" stroke="#ffe08a" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </template>
 
-    const TILT = 0.5;      // how flat the galaxy looks
-    const PHI = -0.4;      // overall rotation of the galaxy on screen
-    const ARMS = 4;
-    const WIND = 4.4;      // how tightly the arms spiral
-    const cosP = Math.cos(PHI), sinP = Math.sin(PHI);
+  <template id="hero-tpl">
+    <div class="empty">
+      <svg class="planet" viewBox="0 0 280 220" aria-hidden="true">
+        <defs>
+          <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5ec8f2"/>
+            <stop offset="1" stop-color="#8ea3fa"/>
+          </linearGradient>
+          <radialGradient id="shade" cx=".32" cy=".28" r=".9">
+            <stop offset=".45" stop-color="#0d0c1f" stop-opacity="0"/>
+            <stop offset="1" stop-color="#0d0c1f" stop-opacity=".55"/>
+          </radialGradient>
+          <pattern id="bands" width="44" height="200" patternUnits="userSpaceOnUse" patternTransform="rotate(-18 100 100)">
+            <rect x="0" width="14" height="200" fill="#fff" fill-opacity=".3"/>
+            <rect x="26" width="8" height="200" fill="#2a3f9e" fill-opacity=".28"/>
+          </pattern>
+          <pattern id="bands2" width="30" height="200" patternUnits="userSpaceOnUse" patternTransform="rotate(-18 100 100)">
+            <rect x="8" width="5" height="200" fill="#fff" fill-opacity=".2"/>
+          </pattern>
+          <clipPath id="ball"><circle cx="100" cy="100" r="44"/></clipPath>
+        </defs>
+        <circle class="star" cx="20" cy="30" r="1.6" fill="#fff" style="animation-delay:-0s"/>
+        <circle class="star" cx="58" cy="18" r="1.1" fill="#fff" style="animation-delay:-0.8s"/>
+        <circle class="star" cx="105" cy="10" r="1.4" fill="#ffe08a" style="animation-delay:-1.6s"/>
+        <circle class="star" cx="190" cy="16" r="1.2" fill="#fff" style="animation-delay:-0.4s"/>
+        <circle class="star" cx="240" cy="34" r="1.8" fill="#c4a8ee" style="animation-delay:-1.2s"/>
+        <circle class="star" cx="262" cy="78" r="1.1" fill="#fff" style="animation-delay:-2.1s"/>
+        <circle class="star" cx="250" cy="130" r="1.5" fill="#fff" style="animation-delay:-0.2s"/>
+        <circle class="star" cx="268" cy="176" r="1.2" fill="#ffe08a" style="animation-delay:-1.9s"/>
+        <circle class="star" cx="225" cy="202" r="1.4" fill="#fff" style="animation-delay:-0.9s"/>
+        <circle class="star" cx="160" cy="212" r="1.1" fill="#c4a8ee" style="animation-delay:-2.4s"/>
+        <circle class="star" cx="95" cy="206" r="1.6" fill="#fff" style="animation-delay:-1.4s"/>
+        <circle class="star" cx="48" cy="186" r="1.2" fill="#fff" style="animation-delay:-0.6s"/>
+        <circle class="star" cx="14" cy="140" r="1.4" fill="#ffe08a" style="animation-delay:-2.2s"/>
+        <circle class="star" cx="26" cy="94" r="1.1" fill="#fff" style="animation-delay:-1.0s"/>
+        <circle class="star" cx="78" cy="56" r="0.9" fill="#fff" style="animation-delay:-1.7s"/>
+        <circle class="star" cx="206" cy="58" r="0.9" fill="#c4a8ee" style="animation-delay:-2.6s"/>
+        <circle class="star" cx="214" cy="168" r="0.9" fill="#fff" style="animation-delay:-0.3s"/>
+        <circle class="star" cx="70" cy="160" r="0.9" fill="#fff" style="animation-delay:-2.0s"/>
+        <path class="star" d="M38 56Q38 62 44 62Q38 62 38 68Q38 62 32 62Q38 62 38 56Z" fill="#fff" style="animation-delay:-0.5s"/>
+        <path class="star" d="M247 145Q247 150 252 150Q247 150 247 155Q247 150 242 150Q247 150 247 145Z" fill="#ffe08a" style="animation-delay:-1.5s"/>
+        <path class="star" d="M150 14Q150 18 154 18Q150 18 150 22Q150 18 146 18Q150 18 150 14Z" fill="#c4a8ee" style="animation-delay:-2.3s"/>
+        <g transform="translate(40 10)">
+          <path d="M34 100A66 19.5 0 0 1 166 100" fill="none" stroke="#ffe08a" stroke-width="3.5" stroke-linecap="round" opacity=".7">
+            <animateTransform attributeName="transform" type="rotate" values="-9 100 100;9 100 100;-9 100 100" dur="7s" repeatCount="indefinite"/>
+          </path>
+          <circle cx="100" cy="100" r="44" fill="url(#pg)"/>
+          <g clip-path="url(#ball)">
+            <g class="spin"><rect x="40" y="40" width="210" height="120" fill="url(#bands)"/></g>
+            <g class="spin2"><rect x="40" y="40" width="210" height="120" fill="url(#bands2)"/></g>
+          </g>
+          <circle cx="100" cy="100" r="44" fill="url(#shade)"/>
+          <path d="M34 100A66 19.5 0 0 0 166 100" fill="none" stroke="#ffe08a" stroke-width="3.5" stroke-linecap="round">
+            <animateTransform attributeName="transform" type="rotate" values="-9 100 100;9 100 100;-9 100 100" dur="7s" repeatCount="indefinite"/>
+          </path>
+        </g>
+      </svg>
+      <h2 class="hero-title">Hi, I'm Lala</h2>
+      <p class="hero-sub">What would you like to learn today?</p>
+    </div>
+  </template>
 
-    let w, h, dpr, cx, cy, R;
-    let particles = [], stars = [], sparks = [], ripples = [], shooters = [], waves = [];
-    let rot = 0, spin = 1, label = null;
-    const pointer = { x: -9999, y: -9999, active: false };
-
-    const SPARK_COLORS = ["#22e5e5", "#c084fc", "#ffffff", "#ffe08a"];
-    const rand = (a, b) => a + Math.random() * (b - a);
-    const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
-
-    function colorFor(r) {
-      if (r < 0.22) return "255,228,170";
-      if (r < 0.5) return Math.random() < 0.3 ? "255,160,215" : "205,160,255";
-      return Math.random() < 0.25 ? "190,160,255" : "120,220,255";
-    }
-
-    function init() {
-      cx = w / 2;
-      cy = h * 0.44;
-      R = Math.min(w * 0.62, h * 0.62);
-
-      const starCount = Math.min(120, Math.floor((w * h) / 10000));
-      stars = Array.from({ length: starCount }, () => ({
-        x: rand(0, w), y: rand(0, h), r: rand(0.4, 1.4),
-        phase: rand(0, Math.PI * 2), speed: rand(0.01, 0.04),
-      }));
-
-      const N = w < 500 ? 1100 : 1900;
-      particles = [];
-      for (let i = 0; i < N; i++) {
-        let a, r;
-        if (Math.random() < 0.22) {
-          // central bulge
-          r = Math.pow(Math.random(), 2) * 0.42;
-          a = rand(0, Math.PI * 2);
-        } else {
-          r = 0.06 + Math.pow(Math.random(), 0.85) * 0.94;
-          const arm = Math.floor(Math.random() * ARMS);
-          const spread = 0.34 * (1.15 - r * 0.55);
-          a = arm * (Math.PI * 2 / ARMS) + r * WIND + gauss() * spread * 2.2;
-        }
-        const rgb = colorFor(r);
-        const big = Math.random() < 0.04;
-        const alpha = rand(0.35, 0.95) * (1 - r * 0.35);
-        particles.push({
-          a, r,
-          size: big ? rand(2, 3) : rand(0.7, 1.7),
-          fill: "rgba(" + rgb + "," + alpha.toFixed(2) + ")",
-          ox: 0, oy: 0, vx: 0, vy: 0, x: 0, y: 0,
-        });
-      }
-    }
-
-    function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      init();
-    }
-
-    function project(a, r) {
-      const ang = a + rot;
-      const x0 = Math.cos(ang) * r * R;
-      const y0 = Math.sin(ang) * r * R * TILT;
-      return { x: cx + x0 * cosP - y0 * sinP, y: cy + x0 * sinP + y0 * cosP };
-    }
-
-    // "You are here" marker sits on one arm
-    const markerPos = () => project(1 * (Math.PI * 2 / ARMS) + 0.62 * WIND, 0.62);
-    const coreRadius = () => R * 0.09;
-
-    function burst(x, y, count, spread) {
-      ripples.push({ x, y, r: 4, a: 1 });
-      for (let i = 0; i < count; i++) {
-        const ang = (Math.PI * 2 * i) / count + rand(-0.2, 0.2);
-        const sp = rand(1.5, spread);
-        sparks.push({
-          x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1,
-          color: SPARK_COLORS[Math.floor(rand(0, SPARK_COLORS.length))],
-        });
-      }
-    }
-
-    function handleTap(x, y) {
-      waves.push({ x, y, r: 0, a: 1 });
-      const m = markerPos();
-      if (Math.hypot(x - m.x, y - m.y) < 22) {
-        burst(m.x, m.y, 20, 4);
-        label = { text: "You are here", sub: "Our Solar System sits in a small arm of the Milky Way.", x: m.x, y: m.y, life: 1 };
-        return;
-      }
-      if (Math.hypot(x - cx, y - cy) < coreRadius() * 1.6) {
-        burst(cx, cy, 40, 7);
-        label = { text: "Galactic Center", sub: "A supermassive black hole called Sagittarius A* lives here.", x: cx, y: cy, life: 1 };
-        return;
-      }
-      burst(x, y, 16, 4.5);
-    }
-
-    function spawnShooter() {
-      shooters.push({ x: rand(0, w), y: rand(0, h * 0.4), vx: rand(5, 8), vy: rand(2, 4), life: 1 });
-    }
-
-    function update() {
-      const target = pointer.active ? 4 : 1;
-      spin += (target - spin) * 0.05;
-      rot += 0.0012 * spin;
-
-      stars.forEach((s) => { s.phase += s.speed; });
-
-      waves.forEach((wv) => { wv.r += 6; wv.a -= 0.018; });
-      waves = waves.filter((wv) => wv.a > 0);
-
-      const ang0 = rot;
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        const ang = p.a + ang0;
-        const x0 = Math.cos(ang) * p.r * R;
-        const y0 = Math.sin(ang) * p.r * R * TILT;
-        const bx = cx + x0 * cosP - y0 * sinP;
-        const by = cy + x0 * sinP + y0 * cosP;
-        let x = bx + p.ox, y = by + p.oy;
-
-        if (pointer.active) {
-          const dx = x - pointer.x, dy = y - pointer.y;
-          const d = Math.hypot(dx, dy);
-          if (d < 90 && d > 0.1) {
-            const f = (1 - d / 90) * 0.9;
-            p.vx += (dx / d) * f;
-            p.vy += (dy / d) * f;
-          }
-        }
-        for (let k = 0; k < waves.length; k++) {
-          const wv = waves[k];
-          const dx = x - wv.x, dy = y - wv.y;
-          const d = Math.hypot(dx, dy);
-          if (Math.abs(d - wv.r) < 24 && d > 0.1) {
-            p.vx += (dx / d) * 1.6 * wv.a;
-            p.vy += (dy / d) * 1.6 * wv.a;
-          }
-        }
-
-        p.vx += -p.ox * 0.035; p.vy += -p.oy * 0.035;
-        p.vx *= 0.9; p.vy *= 0.9;
-        p.ox += p.vx; p.oy += p.vy;
-        p.x = bx + p.ox; p.y = by + p.oy;
-      }
-
-      sparks.forEach((s) => { s.x += s.vx; s.y += s.vy; s.vx *= 0.96; s.vy *= 0.96; s.life -= 0.025; });
-      sparks = sparks.filter((s) => s.life > 0);
-      ripples.forEach((r) => { r.r += 3.5; r.a -= 0.025; });
-      ripples = ripples.filter((r) => r.a > 0);
-      shooters.forEach((s) => { s.x += s.vx; s.y += s.vy; s.life -= 0.02; });
-      shooters = shooters.filter((s) => s.life > 0);
-
-      if (label) { label.life -= 0.006; if (label.life <= 0) label = null; }
-      if (Math.random() < 0.003) spawnShooter();
-    }
-
-    function drawGalaxyHalo() {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(PHI);
-      ctx.scale(1, TILT);
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 1.1);
-      g.addColorStop(0, "rgba(255,210,150,0.22)");
-      g.addColorStop(0.3, "rgba(170,110,255,0.12)");
-      g.addColorStop(0.7, "rgba(60,140,255,0.06)");
-      g.addColorStop(1, "rgba(60,140,255,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(0, 0, R * 1.1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawCore() {
-      const pulse = 1 + 0.05 * Math.sin(performance.now() / 700);
-      const r = R * 0.28 * pulse;
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      g.addColorStop(0, "rgba(255,248,214,0.95)");
-      g.addColorStop(0.15, "rgba(255,214,130,0.6)");
-      g.addColorStop(0.5, "rgba(255,150,90,0.18)");
-      g.addColorStop(1, "rgba(255,150,90,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    }
-
-    function drawMarker() {
-      const m = markerPos();
-      const t = performance.now() / 700;
-      const rr = 5 + 3 * Math.abs(Math.sin(t));
-      ctx.strokeStyle = "rgba(34,229,229," + (0.9 - 0.4 * Math.abs(Math.sin(t))) + ")";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, rr + 4, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = "#22e5e5";
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = "#22e5e5";
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
-      ctx.font = "600 10px Orbitron, 'Segoe UI', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("YOU ARE HERE", m.x, m.y - rr - 10);
-    }
-
-    function drawLabel() {
-      if (!label) return;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, label.life * 2);
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#22e5e5";
-      ctx.font = "700 15px Orbitron, 'Segoe UI', sans-serif";
-      const ty = Math.max(30, label.y - 54);
-      const tx = Math.min(Math.max(label.x, 190), w - 190);
-      ctx.fillText(label.text, tx, ty);
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.font = "12px 'Segoe UI', sans-serif";
-      ctx.fillText(label.sub, tx, ty + 18);
-      ctx.restore();
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, w, h);
-
-      if (pointer.active) {
-        const g = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 70);
-        g.addColorStop(0, "rgba(34,229,229,0.18)");
-        g.addColorStop(1, "rgba(34,229,229,0)");
-        ctx.fillStyle = g;
-        ctx.fillRect(pointer.x - 70, pointer.y - 70, 140, 140);
-      }
-
-      // background stars
-      stars.forEach((s) => {
-        let a = 0.3 + 0.6 * Math.abs(Math.sin(s.phase));
-        let r = s.r;
-        if (pointer.active) {
-          const d = Math.hypot(s.x - pointer.x, s.y - pointer.y);
-          if (d < 100) { a = 1; r = s.r * (1 + (1 - d / 100) * 1.5); }
-        }
-        ctx.fillStyle = "rgba(255,255,255," + a + ")";
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      shooters.forEach((s) => {
-        const grad = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 8, s.y - s.vy * 8);
-        grad.addColorStop(0, "rgba(255,255,255," + s.life + ")");
-        grad.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(s.x, s.y);
-        ctx.lineTo(s.x - s.vx * 8, s.y - s.vy * 8);
-        ctx.stroke();
-      });
-
-      drawGalaxyHalo();
-
-      // galaxy stars, additive blending for a glowing look
-      ctx.globalCompositeOperation = "lighter";
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        ctx.fillStyle = p.fill;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      }
-      drawCore();
-      ctx.globalCompositeOperation = "source-over";
-
-      drawMarker();
-
-      ripples.forEach((r) => {
-        ctx.strokeStyle = "rgba(34,229,229," + r.a + ")";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-
-      sparks.forEach((s) => {
-        ctx.globalAlpha = Math.max(s.life, 0);
-        ctx.fillStyle = s.color;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-
-      drawLabel();
-    }
-
-    function loop() {
-      if (!document.hidden) { update(); draw(); }
-      requestAnimationFrame(loop);
-    }
-
-    window.addEventListener("pointermove", (e) => {
-      pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
-    });
-    window.addEventListener("pointerdown", (e) => {
-      pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
-      if (!reduceMotion) handleTap(e.clientX, e.clientY);
-    });
-    ["pointerup", "pointercancel"].forEach((ev) =>
-      window.addEventListener(ev, (e) => {
-        if (e.pointerType === "touch") pointer.active = false;
-      })
-    );
-    document.addEventListener("pointerleave", () => { pointer.active = false; });
-    window.addEventListener("resize", resize);
-
-    resize();
-    if (reduceMotion) {
-      update(); draw();
-    } else {
-      loop();
-    }
-  })();
-  </script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>

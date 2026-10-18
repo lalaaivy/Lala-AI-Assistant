@@ -1,15 +1,34 @@
 const chat = document.getElementById("chat");
 const promptBox = document.getElementById("prompt");
 const sendBtn = document.getElementById("send-btn");
-const GREETING = "Hi! I'm Lala. Ask me anything about your lessons and I'll help you explore it.";
+const drawer = document.getElementById("drawer");
+const overlay = document.getElementById("overlay");
+const historyEl = document.getElementById("history");
+const STORE = "lala-chats-v1";
+const NEW_TITLE = "New chat";
 const isTouch = window.matchMedia("(pointer: coarse)").matches;
 let busy = false;
+let chats = [];      // saved conversations, newest first
+let current = null;  // the conversation on screen
 
 function getCsrf() {
   const m = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
   if (m) return decodeURIComponent(m[1]);
   const el = document.querySelector("[name=csrfmiddlewaretoken]");
   return el ? el.value : "";
+}
+
+/* ---------- Saved history (stored in this browser) ---------- */
+function loadChats() {
+  try {
+    const list = JSON.parse(localStorage.getItem(STORE) || "[]");
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveChats() {
+  try { localStorage.setItem(STORE, JSON.stringify(chats.slice(0, 30))); } catch (e) {}
 }
 
 /* ---------- Markdown + math rendering ---------- */
@@ -61,21 +80,64 @@ function setReply(el, text) {
 }
 
 /* ---------- Chat ---------- */
+function showHero() {
+  chat.appendChild(document.getElementById("hero-tpl").content.cloneNode(true));
+}
+
+// Adds a name label + bubble; returns the bubble
 function addMessage(text, who) {
-  const div = document.createElement("div");
-  div.className = "message " + who;
-  div.textContent = text;
-  chat.appendChild(div);
+  const hero = chat.querySelector(".empty");
+  if (hero) hero.remove();
+
+  const row = document.createElement("div");
+  row.className = "row " + who;
+  const name = document.createElement("div");
+  name.className = "name";
+  name.textContent = who === "ai" ? "Lala" : "You";
+  const bubble = document.createElement("div");
+  bubble.className = "message " + who;
+  bubble.textContent = text;
+  row.append(name, bubble);
+  chat.appendChild(row);
   chat.scrollTop = chat.scrollHeight;
-  return div;
+  return bubble;
+}
+
+function render() {
+  chat.innerHTML = "";
+  if (!current.msgs.length) {
+    showHero();   // planet + greeting on an empty chat
+  } else {
+    current.msgs.forEach((m) => {
+      const bubble = addMessage(m.text, m.who);
+      if (m.who === "ai") setReply(bubble, m.text);
+    });
+  }
+  chat.scrollTop = chat.scrollHeight;
+  renderHistory();
+}
+
+function newChat() {
+  current = { id: Date.now().toString(36), title: NEW_TITLE, msgs: [] };
+  render();
+  closeDrawer();
+  if (!isTouch) promptBox.focus();
 }
 
 async function sendPrompt(text) {
   text = (text || "").trim();
   if (!text || busy) return;
   busy = true;
+  const convo = current;
+
   addMessage(text, "user");
+  convo.msgs.push({ who: "user", text });
+  if (convo.title === NEW_TITLE) convo.title = text.slice(0, 40);
+  if (!chats.includes(convo)) chats.unshift(convo);
+  saveChats();
+  renderHistory();
   promptBox.value = "";
+
   const loading = addMessage("Thinking...", "ai");
   try {
     const res = await fetch("/ask/", {
@@ -89,6 +151,10 @@ async function sendPrompt(text) {
     try { data = JSON.parse(raw); } catch (e) {}
     if (res.ok && data.reply) {
       setReply(loading, data.reply);
+      convo.msgs.push({ who: "ai", text: data.reply });
+      chats = [convo, ...chats.filter((c) => c !== convo)];  // move to top
+      saveChats();
+      renderHistory();
     } else {
       loading.textContent = data.error || ("Server error " + res.status + ". Please refresh the page and try again.");
     }
@@ -108,14 +174,72 @@ promptBox.addEventListener("keydown", (e) => {
   }
 });
 
-document.getElementById("clear-btn").addEventListener("click", () => {
-  chat.innerHTML = "";
-  addMessage(GREETING, "ai");
-});
+document.getElementById("new-btn").addEventListener("click", newChat);
+document.getElementById("new-chat").addEventListener("click", newChat);
 
 document.querySelectorAll(".chip").forEach((btn) => {
   btn.addEventListener("click", () => sendPrompt(btn.textContent));
 });
+
+/* ---------- Menu + history drawer ---------- */
+function openDrawer() {
+  renderHistory();
+  drawer.classList.add("open");
+  overlay.classList.add("open");
+  document.getElementById("close-drawer").focus();
+}
+function closeDrawer() {
+  drawer.classList.remove("open");
+  overlay.classList.remove("open");
+}
+
+function renderHistory() {
+  historyEl.innerHTML = "";
+  if (!chats.length) {
+    const empty = document.createElement("div");
+    empty.className = "hist-empty";
+    empty.textContent = "No chats yet.";
+    historyEl.appendChild(empty);
+    return;
+  }
+  chats.forEach((c) => {
+    const item = document.createElement("div");
+    item.className = "hist-item" + (c === current ? " active" : "");
+
+    const open = document.createElement("button");
+    open.className = "hist-open";
+    open.textContent = c.title;
+    open.addEventListener("click", () => {
+      current = c;
+      render();
+      closeDrawer();
+    });
+
+    const del = document.createElement("button");
+    del.className = "hist-del";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Delete chat");
+    del.addEventListener("click", () => {
+      if (!confirm("Delete this chat?")) return;
+      chats = chats.filter((x) => x !== c);
+      saveChats();
+      if (c === current) newChat(); else renderHistory();
+    });
+
+    item.append(open, del);
+    historyEl.appendChild(item);
+  });
+}
+
+document.getElementById("menu-btn").addEventListener("click", openDrawer);
+document.getElementById("close-drawer").addEventListener("click", closeDrawer);
+overlay.addEventListener("click", closeDrawer);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+
+/* ---------- Start ---------- */
+chats = loadChats();
+current = { id: Date.now().toString(36), title: NEW_TITLE, msgs: [] };
+render();
 
 /* ---------- Offline detection ---------- */
 function updateStatus() {

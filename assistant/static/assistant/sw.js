@@ -1,620 +1,70 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Lala">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Lala - Study Helper</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" rel="stylesheet">
-  <link rel="manifest" href="{% static 'assistant/manifest.json' %}">
-  <meta name="theme-color" content="#0b0b1e">
-  <link rel="icon" href="{% static 'assistant/icons/icon-192.png' %}">
-  <link rel="apple-touch-icon" href="{% static 'assistant/icons/icon-192.png' %}">
-  <style>
-    :root {
-      --bg: #070714;
-      --accent: #22e5e5;
-      --purple: #8b5cf6;
-      --pink: #c084fc;
-      --glass: rgba(255, 255, 255, 0.07);
-      --glass-border: rgba(255, 255, 255, 0.14);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: #e8e8f5;
-      background:
-        radial-gradient(ellipse at 15% 10%, rgba(139, 92, 246, .35), transparent 50%),
-        radial-gradient(ellipse at 85% 30%, rgba(34, 229, 229, .18), transparent 45%),
-        radial-gradient(ellipse at 40% 95%, rgba(192, 132, 252, .22), transparent 50%),
-        var(--bg);
-      background-attachment: fixed;
-    }
-    button { touch-action: manipulation; }
+const CACHE = "lala-v12";
+const PRECACHE = [
+  "/",
+  "/static/assistant/app.js",
+  "/static/assistant/manifest.json",
+  "/static/assistant/icons/icon-192.png",
+  "/static/assistant/icons/icon-512.png",
+  "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+  "https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js",
+  "https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js",
+  "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+  "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+];
 
-    /* Markdown replies */
-    .message.md { white-space: normal; }
-    .message.md > :first-child { margin-top: 0; }
-    .message.md > :last-child { margin-bottom: 0; }
-    .message.md p { margin: 0 0 .7em; }
-    .message.md h1, .message.md h2, .message.md h3, .message.md h4 {
-      font-size: 1.05rem; font-weight: 700; margin: .9em 0 .4em; color: var(--accent);
-    }
-    .message.md h1 { font-size: 1.2rem; }
-    .message.md ul, .message.md ol { padding-left: 1.3em; margin: 0 0 .7em; }
-    .message.md li { margin-bottom: .25em; }
-    .message.md strong { color: #fff; }
-    .message.md a { color: var(--accent); }
-    .message.md code {
-      background: rgba(255,255,255,.12); padding: 1px 6px;
-      border-radius: 6px; font-size: .88em;
-    }
-    .message.md pre {
-      background: rgba(0,0,0,.4); padding: 10px 12px;
-      border-radius: 10px; overflow-x: auto;
-    }
-    .message.md pre code { background: none; padding: 0; }
-    .message.md blockquote {
-      border-left: 3px solid var(--accent); margin: 0 0 .7em;
-      padding-left: 12px; color: #c8c8e6;
-    }
-    .message.md table { border-collapse: collapse; margin-bottom: .7em; display: block; overflow-x: auto; }
-    .message.md th, .message.md td { border: 1px solid var(--glass-border); padding: 4px 8px; }
-    .message.md hr { border-color: var(--glass-border); }
-    .message.md .katex-display { overflow-x: auto; overflow-y: hidden; }
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE).then((cache) =>
+      Promise.allSettled(PRECACHE.map((url) => cache.add(url)))
+    )
+  );
+  self.skipWaiting();
+});
 
-    #install-btn {
-      background: linear-gradient(90deg, var(--pink), var(--accent));
-      color: #0b0b1e; border: none; border-radius: 20px;
-      padding: 6px 14px; font-size: .8rem; font-weight: 600;
-    }
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
 
-    #cosmos {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
+self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  if (new URL(req.url).pathname.startsWith("/ask")) return;
 
-    .app {
-      position: relative;
-      z-index: 1;
-      max-width: 640px;
-      margin: 0 auto;
-      height: 100vh;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Header */
-    .app-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px;
-    }
-    .brand {
-      font-family: 'Orbitron', 'Segoe UI', sans-serif;
-      font-size: 2.3rem;
-      font-weight: 900;
-      letter-spacing: 6px;
-      line-height: 1.1;
-      background: linear-gradient(90deg, #22e5e5, #c084fc, #ff9ecb, #22e5e5);
-      background-size: 300% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      filter: drop-shadow(0 0 10px rgba(192, 132, 252, .6));
-      animation: shimmer 6s linear infinite;
-    }
-    .brand::after {
-      content: "✦";
-      font-size: .9rem;
-      margin-left: 6px;
-      vertical-align: super;
-      color: #ffe08a;
-      -webkit-text-fill-color: #ffe08a;
-      animation: twinkle 2s ease-in-out infinite;
-    }
-    @keyframes shimmer { to { background-position: 300% 0; } }
-    @keyframes twinkle { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) {
-      .brand, .brand::after { animation: none; }
-    }
-    .tagline {
-      font-family: 'Orbitron', 'Segoe UI', sans-serif;
-      font-size: .62rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #9a9ac0;
-    }
-    .status {
-      display: flex; align-items: center; gap: 6px;
-      font-size: .75rem; color: #bdbde0;
-      background: var(--glass); border: 1px solid var(--glass-border);
-      padding: 6px 12px; border-radius: 20px;
-    }
-    .dot { width: 8px; height: 8px; border-radius: 50%;
-           background: var(--accent); box-shadow: 0 0 8px var(--accent); }
-
-    /* Chat */
-    #chat { flex: 1; overflow-y: auto; padding: 8px 16px 16px; }
-    #chat::-webkit-scrollbar { width: 6px; }
-    #chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
-    .message {
-      padding: 12px 16px; border-radius: 18px; margin-bottom: 14px;
-      max-width: 86%; white-space: pre-wrap; line-height: 1.5; font-size: .95rem;
-    }
-    .message.ai {
-      background: rgba(15, 12, 40, .55);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top-left-radius: 4px;
-    }
-    .message.user {
-      margin-left: auto; color: #0b0b1e; font-weight: 500;
-      background: linear-gradient(135deg, var(--accent), var(--pink));
-      border-top-right-radius: 4px;
-      box-shadow: 0 4px 18px rgba(34, 229, 229, .25);
-    }
-
-    /* Chips */
-    .chips { padding: 0 16px 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .chip {
-      background: var(--glass); border: 1px solid var(--glass-border);
-      color: var(--accent); border-radius: 20px;
-      padding: 6px 14px; font-size: .8rem;
-    }
-    .chip:hover { background: var(--accent); color: #0b0b1e; }
-
-    /* Composer */
-    .composer {
-      margin: 0 12px 6px; padding: 12px;
-      background: rgba(15, 12, 40, .55); border: 1px solid var(--glass-border);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border-radius: 20px;
-    }
-    #prompt {
-      background: rgba(0, 0, 0, .25); color: #fff;
-      border: 1px solid var(--glass-border); border-radius: 14px; resize: none;
-    }
-    #prompt::placeholder { color: #8c8cb0; }
-    #prompt:focus {
-      background: rgba(0, 0, 0, .35); color: #fff;
-      border-color: var(--accent); box-shadow: 0 0 0 .2rem rgba(34, 229, 229, .2);
-    }
-    #send-btn {
-      border: none; border-radius: 22px; padding: 8px 30px; font-weight: 600;
-      color: #0b0b1e; background: linear-gradient(90deg, var(--pink), var(--accent));
-      box-shadow: 0 0 18px rgba(192, 132, 252, .45);
-    }
-    #send-btn:hover { filter: brightness(1.1); }
-    #clear-btn {
-      background: transparent; color: #bdbde0; border-radius: 22px;
-      border: 1px solid var(--glass-border); padding: 8px 22px;
-    }
-    #clear-btn:hover { color: #fff; border-color: #fff; }
-
-    .footer-note {
-      font-size: .7rem; color: #7c7ca0; text-align: center;
-      padding: 4px 0 calc(10px + env(safe-area-inset-bottom));
-    }
-
-    #offline-banner {
-      background: rgba(255, 193, 7, .15); color: #ffd666;
-      border: none; border-bottom: 1px solid rgba(255, 193, 7, .4);
-      border-radius: 0; text-align: center; padding: 8px; margin: 0; font-size: .85rem;
-    }
-
-    /* Lighter effects on phones */
-    @media (max-width: 600px) {
-      .message.ai, .composer {
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        background: rgba(15, 12, 40, .85);
-      }
-      .brand { animation: none; filter: none; }
-      .brand::after { animation: none; }
-    }
-  </style>
-</head>
-<body>
-  {% csrf_token %}
-  <canvas id="cosmos"></canvas>
-
-  <div class="app">
-    <div id="offline-banner" class="d-none">
-      You are offline. Lala needs internet to answer.
-    </div>
-
-    <header class="app-header">
-      <div>
-        <div class="brand">Lala</div>
-        <div class="tagline">Your cosmic study helper</div>
-      </div>
-      <div class="status"><span class="dot"></span> Class assistant</div>
-    </header>
-
-    <div id="chat">
-      <div class="message ai">Hi! I'm Lala. Ask me anything about your lessons and I'll help you explore it.</div>
-    </div>
-
-    <div class="chips">
-      <button class="chip">Give me an example</button>
-      <button class="chip">Explain in simple terms</button>
-      <button class="chip">Quiz me</button>
-      <button id="install-btn" class="d-none">Install app</button>
-    </div>
-
-    <div class="composer">
-      <textarea id="prompt" class="form-control mb-2" rows="2"
-                placeholder="Ask Lala a question..."></textarea>
-      <div class="d-flex justify-content-between">
-        <button id="clear-btn">Clear</button>
-        <button id="send-btn">Send</button>
-      </div>
-    </div>
-
-    <div class="footer-note">Safe Student Mode • Offline PWA</div>
-  </div>
-
-  <script>
-  (() => {
-    const canvas = document.getElementById("cosmos");
-    const ctx = canvas.getContext("2d");
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const TILT = 0.5;      // how flat the galaxy looks
-    const PHI = -0.4;      // overall rotation of the galaxy on screen
-    const ARMS = 4;
-    const WIND = 4.4;      // how tightly the arms spiral
-    const cosP = Math.cos(PHI), sinP = Math.sin(PHI);
-
-    let w, h, dpr, cx, cy, R;
-    let particles = [], stars = [], sparks = [], ripples = [], shooters = [], waves = [];
-    let rot = 0, spin = 1, label = null;
-    const pointer = { x: -9999, y: -9999, active: false };
-
-    const SPARK_COLORS = ["#22e5e5", "#c084fc", "#ffffff", "#ffe08a"];
-    const rand = (a, b) => a + Math.random() * (b - a);
-    const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
-
-    function colorFor(r) {
-      if (r < 0.22) return "255,228,170";
-      if (r < 0.5) return Math.random() < 0.3 ? "255,160,215" : "205,160,255";
-      return Math.random() < 0.25 ? "190,160,255" : "120,220,255";
-    }
-
-    function init() {
-      cx = w / 2;
-      cy = h * 0.44;
-      R = Math.min(w * 0.62, h * 0.62);
-
-      const starCount = Math.min(120, Math.floor((w * h) / 10000));
-      stars = Array.from({ length: starCount }, () => ({
-        x: rand(0, w), y: rand(0, h), r: rand(0.4, 1.4),
-        phase: rand(0, Math.PI * 2), speed: rand(0.01, 0.04),
-      }));
-
-      const N = w < 500 ? 250 : 1900;
-      particles = [];
-      for (let i = 0; i < N; i++) {
-        let a, r;
-        if (Math.random() < 0.22) {
-          // central bulge
-          r = Math.pow(Math.random(), 2) * 0.42;
-          a = rand(0, Math.PI * 2);
-        } else {
-          r = 0.06 + Math.pow(Math.random(), 0.85) * 0.94;
-          const arm = Math.floor(Math.random() * ARMS);
-          const spread = 0.34 * (1.15 - r * 0.55);
-          a = arm * (Math.PI * 2 / ARMS) + r * WIND + gauss() * spread * 2.2;
-        }
-        const rgb = colorFor(r);
-        const big = Math.random() < 0.04;
-        const alpha = rand(0.35, 0.95) * (1 - r * 0.35);
-        particles.push({
-          a, r,
-          size: big ? rand(2, 3) : rand(0.7, 1.7),
-          fill: "rgba(" + rgb + "," + alpha.toFixed(2) + ")",
-          ox: 0, oy: 0, vx: 0, vy: 0, x: 0, y: 0,
-        });
-      }
-    }
-
-    function resize() {
-      w = window.innerWidth;
-      h = window.innerHeight;
-      // lower resolution on phones keeps the page smooth
-      dpr = w < 500 ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      init();
-    }
-
-    function project(a, r) {
-      const ang = a + rot;
-      const x0 = Math.cos(ang) * r * R;
-      const y0 = Math.sin(ang) * r * R * TILT;
-      return { x: cx + x0 * cosP - y0 * sinP, y: cy + x0 * sinP + y0 * cosP };
-    }
-
-    // "You are here" marker sits on one arm
-    const markerPos = () => project(1 * (Math.PI * 2 / ARMS) + 0.62 * WIND, 0.62);
-    const coreRadius = () => R * 0.09;
-
-    function burst(x, y, count, spread) {
-      ripples.push({ x, y, r: 4, a: 1 });
-      for (let i = 0; i < count; i++) {
-        const ang = (Math.PI * 2 * i) / count + rand(-0.2, 0.2);
-        const sp = rand(1.5, spread);
-        sparks.push({
-          x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1,
-          color: SPARK_COLORS[Math.floor(rand(0, SPARK_COLORS.length))],
-        });
-      }
-    }
-
-    function handleTap(x, y) {
-      waves.push({ x, y, r: 0, a: 1 });
-      const m = markerPos();
-      if (Math.hypot(x - m.x, y - m.y) < 22) {
-        burst(m.x, m.y, 20, 4);
-        label = { text: "You are here", sub: "Our Solar System sits in a small arm of the Milky Way.", x: m.x, y: m.y, life: 1 };
-        return;
-      }
-      if (Math.hypot(x - cx, y - cy) < coreRadius() * 1.6) {
-        burst(cx, cy, 40, 7);
-        label = { text: "Galactic Center", sub: "A supermassive black hole called Sagittarius A* lives here.", x: cx, y: cy, life: 1 };
-        return;
-      }
-      burst(x, y, 16, 4.5);
-    }
-
-    function spawnShooter() {
-      shooters.push({ x: rand(0, w), y: rand(0, h * 0.4), vx: rand(5, 8), vy: rand(2, 4), life: 1 });
-    }
-
-    function update() {
-      const target = pointer.active ? 4 : 1;
-      spin += (target - spin) * 0.05;
-      rot += 0.0012 * spin;
-
-      stars.forEach((s) => { s.phase += s.speed; });
-
-      waves.forEach((wv) => { wv.r += 6; wv.a -= 0.018; });
-      waves = waves.filter((wv) => wv.a > 0);
-
-      const ang0 = rot;
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        const ang = p.a + ang0;
-        const x0 = Math.cos(ang) * p.r * R;
-        const y0 = Math.sin(ang) * p.r * R * TILT;
-        const bx = cx + x0 * cosP - y0 * sinP;
-        const by = cy + x0 * sinP + y0 * cosP;
-        let x = bx + p.ox, y = by + p.oy;
-
-        if (pointer.active) {
-          const dx = x - pointer.x, dy = y - pointer.y;
-          const d = Math.hypot(dx, dy);
-          if (d < 90 && d > 0.1) {
-            const f = (1 - d / 90) * 0.9;
-            p.vx += (dx / d) * f;
-            p.vy += (dy / d) * f;
+  // Pages: network first, fall back to the cached copy when offline
+  if (req.mode === "navigate") {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put("/", copy));
           }
-        }
-        for (let k = 0; k < waves.length; k++) {
-          const wv = waves[k];
-          const dx = x - wv.x, dy = y - wv.y;
-          const d = Math.hypot(dx, dy);
-          if (Math.abs(d - wv.r) < 24 && d > 0.1) {
-            p.vx += (dx / d) * 1.6 * wv.a;
-            p.vy += (dy / d) * 1.6 * wv.a;
-          }
-        }
-
-        p.vx += -p.ox * 0.035; p.vy += -p.oy * 0.035;
-        p.vx *= 0.9; p.vy *= 0.9;
-        p.ox += p.vx; p.oy += p.vy;
-        p.x = bx + p.ox; p.y = by + p.oy;
-      }
-
-      sparks.forEach((s) => { s.x += s.vx; s.y += s.vy; s.vx *= 0.96; s.vy *= 0.96; s.life -= 0.025; });
-      sparks = sparks.filter((s) => s.life > 0);
-      ripples.forEach((r) => { r.r += 3.5; r.a -= 0.025; });
-      ripples = ripples.filter((r) => r.a > 0);
-      shooters.forEach((s) => { s.x += s.vx; s.y += s.vy; s.life -= 0.02; });
-      shooters = shooters.filter((s) => s.life > 0);
-
-      if (label) { label.life -= 0.006; if (label.life <= 0) label = null; }
-      if (Math.random() < 0.003) spawnShooter();
-    }
-
-    function drawGalaxyHalo() {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(PHI);
-      ctx.scale(1, TILT);
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 1.1);
-      g.addColorStop(0, "rgba(255,210,150,0.22)");
-      g.addColorStop(0.3, "rgba(170,110,255,0.12)");
-      g.addColorStop(0.7, "rgba(60,140,255,0.06)");
-      g.addColorStop(1, "rgba(60,140,255,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(0, 0, R * 1.1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawCore() {
-      const pulse = 1 + 0.05 * Math.sin(performance.now() / 700);
-      const r = R * 0.28 * pulse;
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      g.addColorStop(0, "rgba(255,248,214,0.95)");
-      g.addColorStop(0.15, "rgba(255,214,130,0.6)");
-      g.addColorStop(0.5, "rgba(255,150,90,0.18)");
-      g.addColorStop(1, "rgba(255,150,90,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    }
-
-    function drawMarker() {
-      const m = markerPos();
-      const t = performance.now() / 700;
-      const rr = 5 + 3 * Math.abs(Math.sin(t));
-      ctx.strokeStyle = "rgba(34,229,229," + (0.9 - 0.4 * Math.abs(Math.sin(t))) + ")";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, rr + 4, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = "#22e5e5";
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = "#22e5e5";
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
-      ctx.font = "600 10px Orbitron, 'Segoe UI', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("YOU ARE HERE", m.x, m.y - rr - 10);
-    }
-
-    function drawLabel() {
-      if (!label) return;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, label.life * 2);
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#22e5e5";
-      ctx.font = "700 15px Orbitron, 'Segoe UI', sans-serif";
-      const ty = Math.max(30, label.y - 54);
-      const tx = Math.min(Math.max(label.x, 190), w - 190);
-      ctx.fillText(label.text, tx, ty);
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.font = "12px 'Segoe UI', sans-serif";
-      ctx.fillText(label.sub, tx, ty + 18);
-      ctx.restore();
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, w, h);
-
-      if (pointer.active) {
-        const g = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 70);
-        g.addColorStop(0, "rgba(34,229,229,0.18)");
-        g.addColorStop(1, "rgba(34,229,229,0)");
-        ctx.fillStyle = g;
-        ctx.fillRect(pointer.x - 70, pointer.y - 70, 140, 140);
-      }
-
-      // background stars
-      stars.forEach((s) => {
-        let a = 0.3 + 0.6 * Math.abs(Math.sin(s.phase));
-        let r = s.r;
-        if (pointer.active) {
-          const d = Math.hypot(s.x - pointer.x, s.y - pointer.y);
-          if (d < 100) { a = 1; r = s.r * (1 + (1 - d / 100) * 1.5); }
-        }
-        ctx.fillStyle = "rgba(255,255,255," + a + ")";
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      shooters.forEach((s) => {
-        const grad = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 8, s.y - s.vy * 8);
-        grad.addColorStop(0, "rgba(255,255,255," + s.life + ")");
-        grad.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(s.x, s.y);
-        ctx.lineTo(s.x - s.vx * 8, s.y - s.vy * 8);
-        ctx.stroke();
-      });
-
-      drawGalaxyHalo();
-
-      // galaxy stars, additive blending for a glowing look
-      ctx.globalCompositeOperation = "lighter";
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        ctx.fillStyle = p.fill;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      }
-      drawCore();
-      ctx.globalCompositeOperation = "source-over";
-
-      drawMarker();
-
-      ripples.forEach((r) => {
-        ctx.strokeStyle = "rgba(34,229,229," + r.a + ")";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-
-      sparks.forEach((s) => {
-        ctx.globalAlpha = Math.max(s.life, 0);
-        ctx.fillStyle = s.color;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-
-      drawLabel();
-    }
-
-    // Phones draw about 30 frames per second instead of 60
-    let lastFrame = 0;
-    function loop(t) {
-      if (!document.hidden && (w >= 500 || t - lastFrame > 33)) {
-        lastFrame = t;
-        update();
-        draw();
-      }
-      requestAnimationFrame(loop);
-    }
-
-    window.addEventListener("pointermove", (e) => {
-      pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
-    });
-    window.addEventListener("pointerdown", (e) => {
-      pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
-      if (!reduceMotion) handleTap(e.clientX, e.clientY);
-    });
-    ["pointerup", "pointercancel"].forEach((ev) =>
-      window.addEventListener(ev, (e) => {
-        if (e.pointerType === "touch") pointer.active = false;
-      })
+          return res;
+        })
+        .catch(() => caches.match("/"))
     );
-    document.addEventListener("pointerleave", () => { pointer.active = false; });
-    window.addEventListener("resize", resize);
+    return;
+  }
 
-    resize();
-    if (reduceMotion) {
-      update(); draw();
-    } else {
-      requestAnimationFrame(loop);
-    }
-  })();
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-  <script src="{% static 'assistant/app.js' %}"></script>
-</body>
-</html>
+  // Everything else: cached copy first, refreshed in the background
+  e.respondWith(
+    caches.match(req).then((cached) => {
+      const network = fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
+});
