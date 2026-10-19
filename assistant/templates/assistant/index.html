@@ -320,6 +320,30 @@
       .chips { padding-bottom: 6px; }
       .footer-note { display: none; }
     }
+
+    /* ===== Only the conversation scrolls ===== */
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+    body { height: 100vh; height: 100dvh; min-height: 0; }
+    .app { height: 100%; overflow: hidden; }
+    .app-header, .chips, .composer, .footer-note, #offline-banner { flex: none; }
+    #chat { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
+            overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+    /* ===== Bubble alignment fix: rows span the chat, bubbles sit inside them ===== */
+    .app > #chat {
+      box-sizing: border-box; width: 100%;
+      padding: 8px 14px 14px;
+      padding-left: max(14px, env(safe-area-inset-left));
+      padding-right: max(14px, env(safe-area-inset-right));
+    }
+    #chat > .row, #chat > .row.ai, #chat > .row.user {
+      align-self: stretch; width: 100%; max-width: 100%; min-width: 0; flex: none;
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
+    #chat > .row.user { align-items: flex-end; }
+    #chat > .row .message { width: fit-content; max-width: 88%; min-width: 0; }
+    #chat > .row.ai .message { max-width: 100%; }
+    #chat > .row .name { margin: 0 6px 3px; }
   </style>
 </head>
 <body>
