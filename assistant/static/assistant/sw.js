@@ -1,4 +1,4 @@
-const CACHE = "lala-v14";
+const CACHE = "lala-v15";
 const PRECACHE = [
   "/",
   "/static/assistant/app.js",
